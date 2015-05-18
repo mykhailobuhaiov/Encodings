@@ -1,12 +1,23 @@
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 
 #include <stdexcept>
 
+#include <algorithm>
 #include <unordered_map>
 
-#define OUTPUT_CONSOLE
+// to get current working directory
+//#ifdef _WIN32
+//#include <direct.h>
+//#define getcwd _getcwd
+//#else
+//#include <unistd.h>
+//#endif
+
+//#define OUTPUT_CONSOLE
+#define EPS 0.0001
 
 using namespace std;
 
@@ -60,44 +71,6 @@ public:
         return _parent == nullptr;
     }
 };
-
-// TODO: to Mikhail Buhaiov - Rework Huffman Codes displaying.
-
-void _printHuffmanCodes(NodeTree *aNode, char *aCode, int aCodeLength);
-void _printHuffmanCodes(NodeTree *aNode, char *aCode, int aCodeLength)
-{
-	// avoid storing parent code of '-' (which is meaningless)
-	if (!aNode -> isRoot())
-	{
-		aCode[aCodeLength++] = aNode -> _code;
-	}
-	
-	if (aNode -> isLeaf())
-	{
-        // Note! New line character '\n' does not show up. It translates the cursor to the new line!
-		cout << "Character: " << aNode -> _char << " Code: ";
-		for (int i = 0; i < aCodeLength; ++i)
-		{
-			cout << aCode[i];
-		}
-		cout << endl;
-	}
-	else
-	{
-		_printHuffmanCodes(aNode -> _left, aCode, aCodeLength);
-		_printHuffmanCodes(aNode -> _right, aCode, aCodeLength);
-	}
-}
-
-void printHuffmanCodes(NodeTree *aRoot);
-void printHuffmanCodes(NodeTree *aRoot)
-{
-	cout << endl << "Printing Huffman codes..." << endl;
-	cout << "----------------" << endl;
-	char code[100];
-	_printHuffmanCodes(aRoot, code, 0);
-	cout << "----------------" << endl << endl;
-}
 
 // mark - List
 
@@ -390,7 +363,14 @@ void minimumFrequencyTreeNode(Queue &aLeavesQueue, Queue &aTreeNodesQueue, NodeT
 		if (!aTreeNodesQueue.isEmpty())
 		{
 			secondNodeTree = aTreeNodesQueue.lookUp();
-			if (firstNodeTree -> _frequency < secondNodeTree -> _frequency)
+            
+            // You was right! When frequencies were equal the algorithm was not computing codes uniquely!
+            // To fix this issue we need to break ties following some rule. Hence, when the frequencies
+            // are equal we give preference to firstNodeTree (the node that is in aLeavesQueue).
+            
+			if ((firstNodeTree -> _frequency - secondNodeTree -> _frequency < EPS &&
+                firstNodeTree -> _frequency - secondNodeTree -> _frequency > - EPS) ||
+                firstNodeTree -> _frequency < secondNodeTree -> _frequency)
 			{
 				aTreeNode = aLeavesQueue.dequeue();
 			}
@@ -453,7 +433,6 @@ void buildHuffmanCodes(Queue &aLeavesQueue, NodeTree *&aRoot)
 		cout << "----------------" << endl;
 #endif
 	}
-	
 #ifdef OUTPUT_CONSOLE
 	cout << treeNodesQueue;
 	cout << "----------------" << endl;
@@ -493,12 +472,81 @@ public:
 	}
 };
 
-void preprocess(int anEntriesArraysSize, Entry *anEntries, Queue &aLeavesQueue);
-void preprocess(int anEntriesArraysSize, Entry *anEntries, Queue &aLeavesQueue)
+void printHuffmanCodes(int anEntriesArraysSize, Entry *anEntries);
+void printHuffmanCodes(int anEntriesArraysSize, Entry *anEntries)
 {
-// TODO: to Mikhail Buhaiov - Learn Merge Sort! Implement it and use it here instead of C++ Standard Library 'sort'!
-	sort(anEntries, anEntries + anEntriesArraysSize);
-	
+    cout << endl << "Printing Huffman codes..." << endl;
+    cout << "----------------" << endl;
+    
+    Stack stack;
+    for (int i = 0; i < anEntriesArraysSize; ++i)
+    {
+        NodeTree *nodeTree = anEntries[i]._codeReference;
+        
+        cout << "Character: " << anEntries[i]._char << " Code: ";
+        
+        while (nodeTree)
+        {
+            stack.push(nodeTree);
+            nodeTree = nodeTree -> _parent;
+        }
+        
+        while (!stack.isEmpty())
+        {
+            nodeTree = stack.pop();
+            
+            // skip root
+            if (nodeTree -> isRoot())
+                continue;
+            
+            cout << nodeTree -> _code;
+        }
+
+        cout << endl;
+    }
+    cout << "----------------" << endl << endl;
+}
+
+void printTree(ostream &anOutputStream, NodeTree *aNode, int anIndent, int anOffset);
+void printTree(ostream &anOutputStream, NodeTree *aNode, int anIndent, int anOffset)
+{
+    if (aNode != nullptr)
+    {
+        printTree(anOutputStream, aNode -> _left, anIndent + anOffset, anOffset);
+        
+        if (anIndent > 0)
+        {
+            anOutputStream << setw(anIndent) << " ";
+        }
+        if (aNode -> isRoot())
+        {
+            anOutputStream << "/ ROOT  ";
+        }
+        else if (aNode -> isLeaf())
+        {
+            anOutputStream << "/ LEAF - '" << aNode -> _char << "' - ";
+        }
+        else
+        {
+            anOutputStream << "/ NODE ";
+        }
+        anOutputStream.precision(3);
+        anOutputStream << "FREQ: " << aNode -> _frequency * 100. << "% /" << endl << endl;
+        
+        printTree(anOutputStream, aNode -> _right, anIndent + anOffset, anOffset);
+    }
+}
+
+
+void preprocess(int anEntriesArraysSize, Entry *anEntries, Queue &aLeavesQueue, bool isSorted = false);
+void preprocess(int anEntriesArraysSize, Entry *anEntries, Queue &aLeavesQueue, bool isSorted)
+{
+    if (!isSorted)
+    {
+        // TODO: to Mikhail Buhaiov - Learn Merge Sort! Implement it and use it here instead of C++ Standard Library 'sort'!
+        sort(anEntries, anEntries + anEntriesArraysSize);
+    }
+    
 	for (int i = 0; i < anEntriesArraysSize; ++i)
 	{
 		NodeTree *nodeTree = new NodeTree(anEntries[i]._char, anEntries[i]._frequency);
@@ -508,26 +556,40 @@ void preprocess(int anEntriesArraysSize, Entry *anEntries, Queue &aLeavesQueue)
 	}
 }
 
-// mark -
+void computeCodes(int anEntriesArraysSize, Entry *anEntries, Queue &aLeavesQueue, NodeTree *&aRoot);
+void computeCodes(int anEntriesArraysSize, Entry *anEntries, Queue &aLeavesQueue, NodeTree *&aRoot)
+{
+    cout << "Alphabet Frequencies..." << endl;
+    cout << "----------------" << endl;
+    cout << aLeavesQueue;
+    cout << "----------------" << endl << endl;
+    
+    // list nodes memory is cleared here
+    buildHuffmanCodes(aLeavesQueue, aRoot);
+    printHuffmanCodes(anEntriesArraysSize, anEntries);
+}
 
-void computeCodes(int anEntriesArraysSize, Entry *anEntries, NodeTree *&aRoot);
-void computeCodes(int anEntriesArraysSize, Entry *anEntries, NodeTree *&aRoot)
+void computeCodesUnsortedEntries(int anEntriesArraysSize, Entry *anEntries, NodeTree *&aRoot);
+void computeCodesUnsortedEntries(int anEntriesArraysSize, Entry *anEntries, NodeTree *&aRoot)
 {
 	Queue leavesQueue;
 	// don't forget to clear dynamically allocated memory for list nodes and tree nodes
 	preprocess(anEntriesArraysSize, anEntries, leavesQueue);
-	cout << "Alphabet Frequencies..." << endl;
-	cout << "----------------" << endl;
-	cout << leavesQueue;
-	cout << "----------------" << endl << endl;
-	
-	// list nodes memory is cleared here
-	buildHuffmanCodes(leavesQueue, aRoot);
-    printHuffmanCodes(aRoot);
+    computeCodes(anEntriesArraysSize, anEntries, leavesQueue, aRoot);
+}
+
+void computeCodesSortedEntries(int anEntriesArraysSize, Entry *anEntries, NodeTree *&aRoot);
+void computeCodesSortedEntries(int anEntriesArraysSize, Entry *anEntries, NodeTree *&aRoot)
+{
+    Queue leavesQueue;
+    // don't forget to clear dynamically allocated memory for list nodes and tree nodes
+    preprocess(anEntriesArraysSize, anEntries, leavesQueue, true);
+    computeCodes(anEntriesArraysSize, anEntries, leavesQueue, aRoot);
 }
 
 // mark - Application
 
+// TODO: to Mikhail Buhaiov - Extend functionality.
 void getFileName(const char *&aFileName);
 void getFileName(const char *&aFileName)
 {
@@ -538,8 +600,8 @@ void getFileName(const char *&aFileName)
 // Implement your out Hash Table and use it here instead of C++ Standard Library 'unordered_map'!
 // http://www.cplusplus.com/reference/unordered_map/unordered_map/
 
-void computeAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, const char *&aFileName);
-void computeAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, const char *&aFileName)
+void computeAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, const char *aFileName);
+void computeAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, const char *aFileName)
 {
 	cout << "Openning File (" << aFileName << ") For Alphabet Analysis..." << endl << endl;
 	
@@ -571,18 +633,17 @@ void computeAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, con
 			 iterator != alphabetOccurenceMap.end();
 			 ++i, ++iterator)
 		{
-//			cout << iterator -> first << " " << iterator -> second << endl;
-			
-			// iterator -> first - char
-			// iterator -> second - number of occurences of the char
-			anEntries[i].set(iterator -> first, float(iterator -> second) / float(count));
+            char ch = iterator -> first;
+            float frequency = float(iterator -> second) / float(count);
+
+			anEntries[i].set(ch, frequency);
 		}
 		
 		fileStream.close();
 	}
 	else
 	{
-		cout << "Error. File is not found." << endl;
+		cout << "Error. File Is Not Found." << endl;
 	}
 }
 
@@ -595,7 +656,7 @@ void encodeFile(int anEntriesArraysSize, Entry *anEntries, NodeTree *aRoot, cons
         codeReferences[anEntries[i]._char] = anEntries[i]._codeReference;
     }
     
-    cout << "Openning Files For Encoding..." << aFileName << endl << endl;
+    cout << "Openning Files For Message Encoding..." << endl << endl;
     
     char outputFileName[100];
     strcpy(outputFileName, "Encoded_");
@@ -605,7 +666,7 @@ void encodeFile(int anEntriesArraysSize, Entry *anEntries, NodeTree *aRoot, cons
     fstream fileStream(aFileName, ios::in);
     if (fileStream.is_open() && outputFileStream.is_open())
     {
-        cout << "Encoding File (" << aFileName << ") into File (" << outputFileName << ") ..." << endl << endl;
+        cout << "Encoding File (" << aFileName << ") Into File (" << outputFileName << ")..." << endl << endl;
         
         Stack stack;
         for(char ch = fileStream.get(); !fileStream.eof(); ch = fileStream.get())
@@ -629,22 +690,19 @@ void encodeFile(int anEntriesArraysSize, Entry *anEntries, NodeTree *aRoot, cons
                         continue;
                     
                     outputFileStream << nodeTree -> _code;
-                    
 #ifdef OUTPUT_CONSOLE
                     cout << nodeTree -> _code;
 #endif
                 }
-                
             }
             catch (out_of_range &anExeption)
             {
-                cout << "No entry found for character " << ch << ". Check your algorithm logic." << endl;
+                cout << "No Entry Found For Character " << ch << ". Check Your Algorithm Logic." << endl;
                 break;
             }
         }
-        
 #ifdef OUTPUT_CONSOLE
-        cout << endl;
+        cout << endl << endl;
 #endif
         
         outputFileStream.close();
@@ -653,7 +711,63 @@ void encodeFile(int anEntriesArraysSize, Entry *anEntries, NodeTree *aRoot, cons
     }
     else
     {
-        cout << "Error. File is not found." << endl;
+        cout << "Error. File Is Not Found." << endl;
+    }
+}
+
+// TODO: to Mikhail Buhaiov - Research the methods allowing to archive (encode) and unarchive binary tree from file.
+void encodeKey(int anEntriesArraysSize, Entry *anEntries, NodeTree *aRoot, const char *aFileName);
+void encodeKey(int anEntriesArraysSize, Entry *anEntries, NodeTree *aRoot, const char *aFileName)
+{
+    cout << "Openning File For Key Encoding..." << endl << endl;
+    
+    char outputFileName[100];
+    strcpy(outputFileName, "Encoded_Key_");
+    strcat(outputFileName, aFileName);
+    
+    fstream outputFileStream(outputFileName, ios::out | ios::trunc);
+    if (outputFileStream.is_open())
+    {
+        cout << "Encoding Key For File (" << aFileName << ") Into File (" << outputFileName << ")..." << endl << endl;
+        
+        outputFileStream << anEntriesArraysSize << endl;
+        
+        for (int i = 0; i < anEntriesArraysSize; ++i)
+        {
+            outputFileStream << anEntries[i]._char << "," << anEntries[i]._frequency << endl;
+            
+#ifdef OUTPUT_CONSOLE
+            cout << anEntries[i]._char << "," << anEntries[i]._frequency << endl;
+#endif
+        }
+#ifdef OUTPUT_CONSOLE
+        cout << endl;
+#endif
+
+        outputFileStream.close();
+        
+        // saving key tree structure
+        
+        cout << "Openning File For Key Tree Structure Encoding..." << endl << endl;
+        
+        strcpy(outputFileName, "Encoded_Key_Tree_Structure_");
+        strcat(outputFileName, aFileName);
+        
+        fstream outputFileStream(outputFileName, ios::out | ios::trunc);
+        if (outputFileStream.is_open())
+        {
+            printTree(outputFileStream, aRoot, 0, 7);
+            
+            outputFileStream.close();
+        }
+        else
+        {
+            cout << "Error. File Is Not Found." << endl;
+        }
+    }
+    else
+    {
+        cout << "Error. File Is Not Found." << endl;
     }
 }
 
@@ -664,10 +778,16 @@ void encodeFile(const char *aFileName)
 	Entry *entries = nullptr;
 	computeAlphabetFrequencies(size, entries, aFileName);
     
+    if (entries == nullptr)
+        return;
+    
     NodeTree *root = nullptr;
-	computeCodes(size, entries, root);
+	computeCodesUnsortedEntries(size, entries, root);
 
+    // encode file and key
+    
     encodeFile(size, entries, root, aFileName);
+    encodeKey(size, entries, root, aFileName);
 	
 	delete [] entries;
     // TODO: to Mikhail Buhaiov - Clear tree nodes memory.
@@ -679,6 +799,133 @@ void encodeFile()
 	const char *fileName = nullptr;
 	getFileName(fileName);
 	encodeFile(fileName);
+}
+
+// mark -
+
+void getAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, const char *aFileName);
+void getAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, const char *aFileName)
+{
+    cout << "Openning File (" << aFileName << ") For Getting Alphabet Frequencies..." << endl << endl;
+    
+    fstream fileStream(aFileName, ios::in);
+    if (fileStream.is_open())
+    {
+        cout << "Getting Alphabet Frequencies..." << endl << endl;
+        
+        fileStream >> anEntriesArraysSize;
+        fileStream.ignore(1);
+        
+        anEntries = new Entry[anEntriesArraysSize];
+        
+        char ch = '-';
+        float frequency = .0f;
+        for (int i = 0; i < anEntriesArraysSize; ++i)
+        {
+            ch = fileStream.get();
+            fileStream.ignore(1);
+            fileStream >> frequency;
+            fileStream.ignore(1);
+            
+            anEntries[i].set(ch, frequency);
+        }
+        
+        fileStream.close();
+    }
+    else
+    {
+        cout << "Error. File Is Not Found." << endl;
+    }
+}
+
+void decodeFile(int anEntriesArraysSize, Entry *anEntries, NodeTree *aRoot, const char *aFileName);
+void decodeFile(int anEntriesArraysSize, Entry *anEntries, NodeTree *aRoot, const char *aFileName)
+{
+    cout << "Openning Files For Message Decoding..." << endl << endl;
+    
+    char outputFileName[100];
+    strcpy(outputFileName, "Decoded_");
+    strcat(outputFileName, aFileName);
+    fstream outputFileStream(outputFileName, ios::out | ios::trunc);
+
+    fstream fileStream(aFileName, ios::in);
+    if (fileStream.is_open() && outputFileStream.is_open())
+    {
+        cout << "Decoding File (" << aFileName << ") Into File (" << outputFileName << ")..." << endl << endl;
+        
+        NodeTree *nodeTree = aRoot;
+        for(char ch = fileStream.get(); !fileStream.eof(); ch = fileStream.get())
+        {
+            switch (ch)
+            {
+                case '1':
+                    nodeTree = nodeTree -> _left;
+                    break;
+                case '0':
+                    nodeTree = nodeTree -> _right;
+                    break;
+                default:
+                    throw runtime_error("Error! Encoded entry is not '0' or '1'!");
+                    break;
+            }
+            
+            if (nodeTree -> isLeaf())
+            {
+                outputFileStream << nodeTree -> _char;
+#ifdef OUTPUT_CONSOLE
+                cout << nodeTree -> _char;
+#endif
+                nodeTree = aRoot;
+            }
+        }
+#ifdef OUTPUT_CONSOLE
+        cout << endl << endl;
+#endif
+        
+        if (nodeTree != aRoot)
+            throw runtime_error("Error! File decoding failure!");
+        
+        outputFileStream.close();
+        fileStream.close();
+    }
+    else
+    {
+        cout << "Error. File Is Not Found." << endl;
+    }
+}
+
+void decodeFile();
+void decodeFile()
+{
+    const char *fileName = nullptr;
+    getFileName(fileName);
+
+    // decode key
+    
+    char encodedFileKey[100];
+    strcpy(encodedFileKey, "Encoded_Key_");
+    strcat(encodedFileKey, fileName);
+    
+    int size = -1;
+    Entry *entries = nullptr;
+    getAlphabetFrequencies(size, entries, encodedFileKey);
+    
+    if (entries == nullptr)
+        return;
+    
+    NodeTree *root = nullptr;
+    computeCodesSortedEntries(size, entries, root);
+    
+    // decode file
+    
+    char encodedFileName[100];
+    strcpy(encodedFileName, "Encoded_");
+    strcat(encodedFileName, fileName);
+    
+    decodeFile(size, entries, root, encodedFileName);
+    
+    delete [] entries;
+    // TODO: to Mikhail Buhaiov - Clear tree nodes memory.
 }
 
 // mark -
@@ -723,7 +970,7 @@ int run()
 		cout << endl;
 		if (option == -1)
 		{
-			cout << "Invalid selection. Please, try again." << endl;
+			cout << "Invalid Selection. Please, Try Again." << endl;
 			continue;
 		}
 		
@@ -731,7 +978,7 @@ int run()
 		{
 			case 0:
 			{
-				cout << "Thank you! Good bye!" << endl;
+				cout << "Thank You! Good Bye!" << endl;
 				break;
 			}
 			case 1:
@@ -741,6 +988,7 @@ int run()
 			}
 			case 2:
 			{
+                decodeFile();
 				break;
 			}
 			default:
@@ -753,6 +1001,12 @@ int run()
 
 // mark -
 
-int main() {
+int main()
+{
+    // to get current working directory
+//    char *buffer = getcwd(NULL, 0);
+//    cout << buffer << endl << endl;
+//    delete [] buffer;
+
 	return run();
 }

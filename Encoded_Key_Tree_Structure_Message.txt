@@ -1,0 +1,162 @@
+                            / LEAF - 't' - FREQ: 4.36% /
+
+                     / NODE FREQ: 8.96% /
+
+                                   / LEAF - 'l' - FREQ: 2.18% /
+
+                            / NODE FREQ: 4.6% /
+
+                                          / LEAF - '.' - FREQ: 1.21% /
+
+                                   / NODE FREQ: 2.42% /
+
+                                                        / LEAF - '5' - FREQ: 0.242% /
+
+                                                 / NODE FREQ: 0.484% /
+
+                                                        / LEAF - 'x' - FREQ: 0.242% /
+
+                                          / NODE FREQ: 1.21% /
+
+                                                 / LEAF - 'M' - FREQ: 0.726% /
+
+              / NODE FREQ: 18.9% /
+
+                            / LEAF - 'd' - FREQ: 4.84% /
+
+                     / NODE FREQ: 9.93% /
+
+                            / LEAF - 's' - FREQ: 5.08% /
+
+       / NODE FREQ: 41.9% /
+
+                            / LEAF - 'i' - FREQ: 5.08% /
+
+                     / NODE FREQ: 10.9% /
+
+                                   / LEAF - 'h' - FREQ: 2.91% /
+
+                            / NODE FREQ: 5.81% /
+
+                                   / LEAF - 'p' - FREQ: 2.91% /
+
+              / NODE FREQ: 23% /
+
+                            / LEAF - 'a' - FREQ: 6.05% /
+
+                     / NODE FREQ: 12.1% /
+
+                            / LEAF - 'n' - FREQ: 6.05% /
+
+/ ROOT  FREQ: 100% /
+
+                                          / LEAF - 'y' - FREQ: 1.45% /
+
+                                   / NODE FREQ: 2.91% /
+
+                                                 / LEAF - 'b' - FREQ: 0.726% /
+
+                                          / NODE FREQ: 1.45% /
+
+                                                 / LEAF - 'H' - FREQ: 0.726% /
+
+                            / NODE FREQ: 6.05% /
+
+                                   / LEAF - 'u' - FREQ: 3.15% /
+
+                     / NODE FREQ: 12.6% /
+
+                                   / LEAF - 'm' - FREQ: 3.15% /
+
+                            / NODE FREQ: 6.54% /
+
+                                                 / LEAF - ',' - FREQ: 0.726% /
+
+                                          / NODE FREQ: 1.45% /
+
+                                                        / LEAF - '2' - FREQ: 0.242% /
+
+                                                 / NODE FREQ: 0.726% /
+
+                                                        / LEAF - '"' - FREQ: 0.484% /
+
+                                   / NODE FREQ: 3.39% /
+
+                                                 / LEAF - 'g' - FREQ: 0.969% /
+
+                                          / NODE FREQ: 1.94% /
+
+                                                        / LEAF - 'v' - FREQ: 0.484% /
+
+                                                 / NODE FREQ: 0.969% /
+
+                                                        / LEAF - 'T' - FREQ: 0.484% /
+
+              / NODE FREQ: 26.9% /
+
+                            / LEAF - 'o' - FREQ: 7.02% /
+
+                     / NODE FREQ: 14.3% /
+
+                            / LEAF - 'e' - FREQ: 7.26% /
+
+       / NODE FREQ: 58.1% /
+
+                                   / LEAF - 'r' - FREQ: 3.63% /
+
+                            / NODE FREQ: 7.26% /
+
+                                   / LEAF - 'f' - FREQ: 3.63% /
+
+                     / NODE FREQ: 14.8% /
+
+                                   / LEAF - 'c' - FREQ: 3.63% /
+
+                            / NODE FREQ: 7.51% /
+
+                                                        / LEAF - 'w' - FREQ: 0.484% /
+
+                                                 / NODE FREQ: 0.969% /
+
+                                                        / LEAF - 'A' - FREQ: 0.484% /
+
+                                          / NODE FREQ: 1.94% /
+
+                                                        / LEAF - 'I' - FREQ: 0.484% /
+
+                                                 / NODE FREQ: 0.969% /
+
+                                                        / LEAF - 'C' - FREQ: 0.484% /
+
+                                   / NODE FREQ: 3.87% /
+
+                                                        / LEAF - 'D' - FREQ: 0.484% /
+
+                                                 / NODE FREQ: 0.969% /
+
+                                                               / LEAF - 'R' - FREQ: 0.242% /
+
+                                                        / NODE FREQ: 0.484% /
+
+                                                               / LEAF - '-' - FREQ: 0.242% /
+
+                                          / NODE FREQ: 1.94% /
+
+                                                               / LEAF - '1' - FREQ: 0.242% /
+
+                                                        / NODE FREQ: 0.484% /
+
+                                                               / LEAF - 'P' - FREQ: 0.242% /
+
+                                                 / NODE FREQ: 0.969% /
+
+                                                               / LEAF - '/' - FREQ: 0.242% /
+
+                                                        / NODE FREQ: 0.484% /
+
+                                                               / LEAF - '9' - FREQ: 0.242% /
+
+              / NODE FREQ: 31.2% /
+
+                     / LEAF - ' ' - FREQ: 16.5% /
+
