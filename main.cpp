@@ -2,23 +2,24 @@
 #include <iostream>
 #include <fstream>
 
+#include <stdexcept>
+
 #include <unordered_map>
 
-//#define OUTPUT
+#define OUTPUT_CONSOLE
 
 using namespace std;
 
-// TODO: encapsulate Tree Data Structure
-
 // mark - Tree
 
+// TODO: to Mikhail Buhaiov - Encapsulate Tree Data Structure.
 class NodeTree
 {
 public:
 	char _char[100];
 	float _frequency;
 	
-	int _code;
+	char _code;
 	
 	NodeTree *_parent;
 	NodeTree *_left;
@@ -29,10 +30,11 @@ public:
 		_char[0] = '\0';
 		_frequency = 0.f;
 		
-		_code = -1;
-		_parent = NULL;
-		_left = NULL;
-		_right = NULL;
+		_code = '-';
+        
+		_parent = nullptr;
+		_left = nullptr;
+		_right = nullptr;
 	}
 	
 	NodeTree(char aCharacter, float aFrequency)
@@ -41,33 +43,39 @@ public:
 		_char[1] = '\0';
 		_frequency = aFrequency;
 		
-		_code = -1;
-		_parent = NULL;
-		_left = NULL;
-		_right = NULL;
+		_code = '-';
+        
+		_parent = nullptr;
+		_left = nullptr;
+		_right = nullptr;
 	}
 	
 	bool isLeaf()
 	{
-		return (_left == NULL && _right == NULL);
+		return (_left == nullptr && _right == nullptr);
 	}
+    
+    bool isRoot()
+    {
+        return _parent == nullptr;
+    }
 };
 
-void _printHuffmanCodes(NodeTree *aNode, int *aCode, int aCodeLength);
-void _printHuffmanCodes(NodeTree *aNode, int *aCode, int aCodeLength)
+// TODO: to Mikhail Buhaiov - Rework Huffman Codes displaying.
+
+void _printHuffmanCodes(NodeTree *aNode, char *aCode, int aCodeLength);
+void _printHuffmanCodes(NodeTree *aNode, char *aCode, int aCodeLength)
 {
-	// avoid storing parent code of -1 (which is meaningless)
-	if (aNode -> _parent)
+	// avoid storing parent code of '-' (which is meaningless)
+	if (!aNode -> isRoot())
 	{
 		aCode[aCodeLength++] = aNode -> _code;
 	}
 	
 	if (aNode -> isLeaf())
 	{
-		cout << "Character: "
-		// TODO: Remove duplicated code!
-		<< (aNode -> _char[0] == '\n' ? "'new line'" : aNode -> _char)
-		<< " Code: ";
+        // Note! New line character '\n' does not show up. It translates the cursor to the new line!
+		cout << "Character: " << aNode -> _char << " Code: ";
 		for (int i = 0; i < aCodeLength; ++i)
 		{
 			cout << aCode[i];
@@ -86,9 +94,9 @@ void printHuffmanCodes(NodeTree *aRoot)
 {
 	cout << endl << "Printing Huffman codes..." << endl;
 	cout << "----------------" << endl;
-	int code[100];
+	char code[100];
 	_printHuffmanCodes(aRoot, code, 0);
-	cout << "----------------" << endl;
+	cout << "----------------" << endl << endl;
 }
 
 // mark - List
@@ -101,7 +109,7 @@ public:
 	
     NodeTree *_data;
 	
-    NodeList(NodeList *aNext = NULL, NodeList *aPrevious = NULL, NodeTree *aData = NULL)
+    NodeList(NodeList *aNext = nullptr, NodeList *aPrevious = nullptr, NodeTree *aData = nullptr)
     {
         _next = aNext;
 		_previous = aPrevious;
@@ -140,7 +148,7 @@ private:
 		previous -> _next = next;
 		
 		delete aNodeList;
-		aNodeList = NULL;
+		aNodeList = nullptr;
 		--_size;
 		
 		return previous;
@@ -162,7 +170,7 @@ public:
 		_pre_head = new NodeList();
 		_post_tail = new NodeList();
 		
-		// NULL <- _pre_head <-> _post_tail -> NULL
+		// nullptr <- _pre_head <-> _post_tail -> nullptr
 		
 		_pre_head -> _previous = _post_tail;
 		_post_tail -> _next = _pre_head;
@@ -232,9 +240,9 @@ public:
 		while (nodeList != aList._post_tail)
 		{
 			NodeTree *node = nodeList -> _data;
-			anOutputStream << "Character: "
-			// TODO: Remove duplicated code!
-			<< (node -> _char[0] == '\n' ? "'new line'" : node -> _char)
+            
+            // Note! New line character '\n' does not show up. It translates the cursor to the new line!
+			anOutputStream << "Character: " << node -> _char
 			<< " Frequency: " << node -> _frequency << endl;
 			
 			nodeList = nodeList -> _previous;
@@ -292,13 +300,61 @@ public:
 	}
 };
 
+// mark - Stack
+
+class Stack
+{
+private:
+    List _list;
+    
+public:
+    Stack()
+    {
+    }
+    
+    ~Stack()
+    {
+    }
+    
+    bool isEmpty()
+    {
+        return _list.isEmpty();
+    }
+    
+    int getSize() const
+    {
+        return _list.getSize();
+    }
+    
+    void push(NodeTree *aData)
+    {
+        _list.pushBack(aData);
+    }
+    
+    NodeTree *pop()
+    {
+        return _list.popBack();
+    }
+    
+    NodeTree *lookUp()
+    {
+        return _list.lookUpBack();
+    }
+    
+    friend ostream &operator<<(ostream &anOutputStream, const Stack &aStack)
+    {
+        anOutputStream << aStack._list;
+        return anOutputStream;
+    }
+};
+
 // mark -  Huffman Codes Algorithm
 
 NodeTree *mergeChildren(NodeTree *aFirstChild, NodeTree *aSecondChild);
 NodeTree *mergeChildren(NodeTree *aFirstChild, NodeTree *aSecondChild)
 {
-    aFirstChild -> _code = 1; // left
-    aSecondChild -> _code = 0; // right
+    aFirstChild -> _code = '1'; // left
+    aSecondChild -> _code = '0'; // right
     
     NodeTree *parent = new NodeTree();
     parent -> _frequency = aFirstChild -> _frequency + aSecondChild -> _frequency;
@@ -326,8 +382,8 @@ NodeTree *mergeChildren(NodeTree *aFirstChild, NodeTree *aSecondChild)
 void minimumFrequencyTreeNode(Queue &aLeavesQueue, Queue &aTreeNodesQueue, NodeTree *&aTreeNode);
 void minimumFrequencyTreeNode(Queue &aLeavesQueue, Queue &aTreeNodesQueue, NodeTree *&aTreeNode)
 {
-	NodeTree *firstNodeTree = NULL;
-	NodeTree *secondNodeTree = NULL;
+	NodeTree *firstNodeTree = nullptr;
+	NodeTree *secondNodeTree = nullptr;
 	if (!aLeavesQueue.isEmpty())
 	{
 		firstNodeTree = aLeavesQueue.lookUp();
@@ -360,16 +416,16 @@ void minimumFrequencyTreeNode(Queue &aLeavesQueue, Queue &aTreeNodesQueue, NodeT
 void buildHuffmanCodes(Queue &aLeavesQueue, NodeTree *&aRoot);
 void buildHuffmanCodes(Queue &aLeavesQueue, NodeTree *&aRoot)
 {
-	cout << endl << "Building Huffman codes..." << endl;
+	cout << "Building Huffman codes..." << endl;
 	
-#ifdef OUTPUT
+#ifdef OUTPUT_CONSOLE
 	cout << "----------------" << endl;
 #endif
 	
 	Queue treeNodesQueue;
 	while (!aLeavesQueue.isEmpty() || treeNodesQueue.getSize() > 1)
 	{
-#ifdef OUTPUT
+#ifdef OUTPUT_CONSOLE
 		cout << aLeavesQueue;
 		cout << treeNodesQueue;
 #endif
@@ -377,28 +433,28 @@ void buildHuffmanCodes(Queue &aLeavesQueue, NodeTree *&aRoot)
 		// get two minimum tree nodes from the queues
 		
 		// get first tree node form the list
-		NodeTree *firstChild = NULL;
+		NodeTree *firstChild = nullptr;
 		minimumFrequencyTreeNode(aLeavesQueue, treeNodesQueue, firstChild);
 		
 		// get second tree node form the list
-		NodeTree *secondChild = NULL;
+		NodeTree *secondChild = nullptr;
 		minimumFrequencyTreeNode(aLeavesQueue, treeNodesQueue, secondChild);
 		
 		// merge tree nodes
-		if (firstChild == NULL || secondChild == NULL)
+		if (firstChild == nullptr || secondChild == nullptr)
 		{
-			throw runtime_error("Error! Children must not be NULL.");
+			throw runtime_error("Error! Children must not be nullptr.");
 		}
 		
 		NodeTree *parent = mergeChildren(firstChild, secondChild);
 		treeNodesQueue.enqueue(parent);
 
-#ifdef OUTPUT
+#ifdef OUTPUT_CONSOLE
 		cout << "----------------" << endl;
 #endif
 	}
 	
-#ifdef OUTPUT
+#ifdef OUTPUT_CONSOLE
 	cout << treeNodesQueue;
 	cout << "----------------" << endl;
 #endif
@@ -412,19 +468,22 @@ void buildHuffmanCodes(Queue &aLeavesQueue, NodeTree *&aRoot)
 class Entry
 {
 public:
-	char _ch;
+	char _char;
 	float _frequency;
-	char _code[100];
+    
+    NodeTree *_codeReference;
 	
 	Entry(char aChar = '\0', float aFrequency = .0f)
 	{
-		_code[0] = '\0';
 		set(aChar, aFrequency);
+        
+        _codeReference = nullptr;
+
 	}
 	
 	void set(char aChar, float aFrequency)
 	{
-		_ch = aChar;
+		_char = aChar;
 		_frequency = aFrequency;
 	}
 	
@@ -442,15 +501,17 @@ void preprocess(int anEntriesArraysSize, Entry *anEntries, Queue &aLeavesQueue)
 	
 	for (int i = 0; i < anEntriesArraysSize; ++i)
 	{
-		NodeTree *nodeTree = new NodeTree(anEntries[i]._ch, anEntries[i]._frequency);
+		NodeTree *nodeTree = new NodeTree(anEntries[i]._char, anEntries[i]._frequency);
 		aLeavesQueue.enqueue(nodeTree);
+        
+        anEntries[i]._codeReference = nodeTree;
 	}
 }
 
 // mark -
 
-void generateCodes(int anEntriesArraysSize, Entry *anEntries);
-void generateCodes(int anEntriesArraysSize, Entry *anEntries)
+void computeCodes(int anEntriesArraysSize, Entry *anEntries, NodeTree *&aRoot);
+void computeCodes(int anEntriesArraysSize, Entry *anEntries, NodeTree *&aRoot)
 {
 	Queue leavesQueue;
 	// don't forget to clear dynamically allocated memory for list nodes and tree nodes
@@ -458,14 +519,11 @@ void generateCodes(int anEntriesArraysSize, Entry *anEntries)
 	cout << "Alphabet Frequencies..." << endl;
 	cout << "----------------" << endl;
 	cout << leavesQueue;
-	cout << "----------------" << endl;
+	cout << "----------------" << endl << endl;
 	
 	// list nodes memory is cleared here
-	NodeTree *root = nullptr;
-	buildHuffmanCodes(leavesQueue, root);
-	printHuffmanCodes(root);
-	
-	// TODO: clear tree nodes memory
+	buildHuffmanCodes(leavesQueue, aRoot);
+    printHuffmanCodes(aRoot);
 }
 
 // mark - Application
@@ -483,7 +541,7 @@ void getFileName(const char *&aFileName)
 void computeAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, const char *&aFileName);
 void computeAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, const char *&aFileName)
 {
-	cout << "File To Encode: " << aFileName << endl << endl;
+	cout << "Openning File (" << aFileName << ") For Alphabet Analysis..." << endl << endl;
 	
 	fstream fileStream(aFileName, ios::in);
 	if (fileStream.is_open())
@@ -528,16 +586,91 @@ void computeAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, con
 	}
 }
 
-void generateCodes(const char *&aFileName);
-void generateCodes(const char *&aFileName)
+void encodeFile(int anEntriesArraysSize, Entry *anEntries, NodeTree *aRoot, const char *aFileName);
+void encodeFile(int anEntriesArraysSize, Entry *anEntries, NodeTree *aRoot, const char *aFileName)
+{
+    unordered_map<char, NodeTree *> codeReferences;
+    for (int i = 0; i < anEntriesArraysSize; ++i)
+    {
+        codeReferences[anEntries[i]._char] = anEntries[i]._codeReference;
+    }
+    
+    cout << "Openning Files For Encoding..." << aFileName << endl << endl;
+    
+    char outputFileName[100];
+    strcpy(outputFileName, "Encoded_");
+    strcat(outputFileName, aFileName);
+    fstream outputFileStream(outputFileName, ios::out | ios::trunc);
+    
+    fstream fileStream(aFileName, ios::in);
+    if (fileStream.is_open() && outputFileStream.is_open())
+    {
+        cout << "Encoding File (" << aFileName << ") into File (" << outputFileName << ") ..." << endl << endl;
+        
+        Stack stack;
+        for(char ch = fileStream.get(); !fileStream.eof(); ch = fileStream.get())
+        {
+            try
+            {
+                NodeTree *nodeTree = codeReferences.at(ch);
+                
+                while (nodeTree)
+                {
+                    stack.push(nodeTree);
+                    nodeTree = nodeTree -> _parent;
+                }
+                
+                while (!stack.isEmpty())
+                {
+                    nodeTree = stack.pop();
+                    
+                    // skip root
+                    if (nodeTree -> isRoot())
+                        continue;
+                    
+                    outputFileStream << nodeTree -> _code;
+                    
+#ifdef OUTPUT_CONSOLE
+                    cout << nodeTree -> _code;
+#endif
+                }
+                
+            }
+            catch (out_of_range &anExeption)
+            {
+                cout << "No entry found for character " << ch << ". Check your algorithm logic." << endl;
+                break;
+            }
+        }
+        
+#ifdef OUTPUT_CONSOLE
+        cout << endl;
+#endif
+        
+        outputFileStream.close();
+        fileStream.close();
+        
+    }
+    else
+    {
+        cout << "Error. File is not found." << endl;
+    }
+}
+
+void encodeFile(const char *aFileName);
+void encodeFile(const char *aFileName)
 {
 	int size = -1;
 	Entry *entries = nullptr;
 	computeAlphabetFrequencies(size, entries, aFileName);
-	generateCodes(size, entries);
+    
+    NodeTree *root = nullptr;
+	computeCodes(size, entries, root);
+
+    encodeFile(size, entries, root, aFileName);
 	
-	// use entries to encode file
 	delete [] entries;
+    // TODO: to Mikhail Buhaiov - Clear tree nodes memory.
 }
 
 void encodeFile();
@@ -545,7 +678,7 @@ void encodeFile()
 {
 	const char *fileName = nullptr;
 	getFileName(fileName);
-	generateCodes(fileName);
+	encodeFile(fileName);
 }
 
 // mark -
