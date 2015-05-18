@@ -1,5 +1,10 @@
 
 #include <iostream>
+#include <fstream>
+
+#include <unordered_map>
+
+//#define OUTPUT
 
 using namespace std;
 
@@ -48,8 +53,8 @@ public:
 	}
 };
 
-void _printHaffmanCodes(NodeTree *aNode, int *aCode, int aCodeLength);
-void _printHaffmanCodes(NodeTree *aNode, int *aCode, int aCodeLength)
+void _printHuffmanCodes(NodeTree *aNode, int *aCode, int aCodeLength);
+void _printHuffmanCodes(NodeTree *aNode, int *aCode, int aCodeLength)
 {
 	// avoid storing parent code of -1 (which is meaningless)
 	if (aNode -> _parent)
@@ -59,7 +64,10 @@ void _printHaffmanCodes(NodeTree *aNode, int *aCode, int aCodeLength)
 	
 	if (aNode -> isLeaf())
 	{
-		cout << "Character: " << aNode -> _char << " Code: ";
+		cout << "Character: "
+		// TODO: Remove duplicated code!
+		<< (aNode -> _char[0] == '\n' ? "'new line'" : aNode -> _char)
+		<< " Code: ";
 		for (int i = 0; i < aCodeLength; ++i)
 		{
 			cout << aCode[i];
@@ -68,18 +76,18 @@ void _printHaffmanCodes(NodeTree *aNode, int *aCode, int aCodeLength)
 	}
 	else
 	{
-		_printHaffmanCodes(aNode -> _left, aCode, aCodeLength);
-		_printHaffmanCodes(aNode -> _right, aCode, aCodeLength);
+		_printHuffmanCodes(aNode -> _left, aCode, aCodeLength);
+		_printHuffmanCodes(aNode -> _right, aCode, aCodeLength);
 	}
 }
 
-void printHaffmanCodes(NodeTree *aRoot);
-void printHaffmanCodes(NodeTree *aRoot)
+void printHuffmanCodes(NodeTree *aRoot);
+void printHuffmanCodes(NodeTree *aRoot)
 {
-	cout << endl << "Printing Haffman codes..." << endl;
+	cout << endl << "Printing Huffman codes..." << endl;
 	cout << "----------------" << endl;
 	int code[100];
-	_printHaffmanCodes(aRoot, code, 0);
+	_printHuffmanCodes(aRoot, code, 0);
 	cout << "----------------" << endl;
 }
 
@@ -224,7 +232,9 @@ public:
 		while (nodeList != aList._post_tail)
 		{
 			NodeTree *node = nodeList -> _data;
-			anOutputStream << "Character: " << node -> _char
+			anOutputStream << "Character: "
+			// TODO: Remove duplicated code!
+			<< (node -> _char[0] == '\n' ? "'new line'" : node -> _char)
 			<< " Frequency: " << node -> _frequency << endl;
 			
 			nodeList = nodeList -> _previous;
@@ -282,7 +292,7 @@ public:
 	}
 };
 
-// mark -  Haffman Codes Algorithm
+// mark -  Huffman Codes Algorithm
 
 NodeTree *mergeChildren(NodeTree *aFirstChild, NodeTree *aSecondChild);
 NodeTree *mergeChildren(NodeTree *aFirstChild, NodeTree *aSecondChild)
@@ -347,17 +357,22 @@ void minimumFrequencyTreeNode(Queue &aLeavesQueue, Queue &aTreeNodesQueue, NodeT
 	}
 }
 
-void buildHaffmanCodes(Queue &aLeavesQueue, NodeTree *&aRoot);
-void buildHaffmanCodes(Queue &aLeavesQueue, NodeTree *&aRoot)
+void buildHuffmanCodes(Queue &aLeavesQueue, NodeTree *&aRoot);
+void buildHuffmanCodes(Queue &aLeavesQueue, NodeTree *&aRoot)
 {
-	cout << endl << "Building Haffman codes..." << endl;
+	cout << endl << "Building Huffman codes..." << endl;
+	
+#ifdef OUTPUT
 	cout << "----------------" << endl;
+#endif
 	
 	Queue treeNodesQueue;
 	while (!aLeavesQueue.isEmpty() || treeNodesQueue.getSize() > 1)
 	{
+#ifdef OUTPUT
 		cout << aLeavesQueue;
 		cout << treeNodesQueue;
+#endif
 		
 		// get two minimum tree nodes from the queues
 		
@@ -377,45 +392,234 @@ void buildHaffmanCodes(Queue &aLeavesQueue, NodeTree *&aRoot)
 		
 		NodeTree *parent = mergeChildren(firstChild, secondChild);
 		treeNodesQueue.enqueue(parent);
-		
+
+#ifdef OUTPUT
 		cout << "----------------" << endl;
+#endif
 	}
 	
+#ifdef OUTPUT
 	cout << treeNodesQueue;
 	cout << "----------------" << endl;
+#endif
 	
 	aRoot = treeNodesQueue.dequeue();
 }
 
-void preprocess(int anArraysSize, char *anAlphabet, float *aFrequencies, Queue &aLeavesQueue);
-void preprocess(int anArraysSize, char *anAlphabet, float *aFrequencies, Queue &aLeavesQueue)
+// mark -
+
+// TODO: to Mikhail Buhaiov - Use Entry class everywhere!
+class Entry
 {
-	// TODO: sort array before
-	for (int i = 0; i < anArraysSize; ++i)
+public:
+	char _ch;
+	float _frequency;
+	char _code[100];
+	
+	Entry(char aChar = '\0', float aFrequency = .0f)
 	{
-		int index = anArraysSize - i - 1;
-		NodeTree *nodeTree = new NodeTree(anAlphabet[index], aFrequencies[index]);
+		_code[0] = '\0';
+		set(aChar, aFrequency);
+	}
+	
+	void set(char aChar, float aFrequency)
+	{
+		_ch = aChar;
+		_frequency = aFrequency;
+	}
+	
+	bool operator < (const Entry& anEntry) const
+	{
+		return (_frequency < anEntry._frequency);
+	}
+};
+
+void preprocess(int anEntriesArraysSize, Entry *anEntries, Queue &aLeavesQueue);
+void preprocess(int anEntriesArraysSize, Entry *anEntries, Queue &aLeavesQueue)
+{
+// TODO: to Mikhail Buhaiov - Learn Merge Sort! Implement it and use it here instead of C++ Standard Library 'sort'!
+	sort(anEntries, anEntries + anEntriesArraysSize);
+	
+	for (int i = 0; i < anEntriesArraysSize; ++i)
+	{
+		NodeTree *nodeTree = new NodeTree(anEntries[i]._ch, anEntries[i]._frequency);
 		aLeavesQueue.enqueue(nodeTree);
 	}
 }
 
-// mark - main
+// mark -
 
-int main() {
-	
-	char alphabet[] = {'a', 'b', 'c', 'd', 'e'};
-	float frequencies[] = {0.32, 0.25, 0.2, 0.18, 0.05};
-	int size = 5;
-	
+void generateCodes(int anEntriesArraysSize, Entry *anEntries);
+void generateCodes(int anEntriesArraysSize, Entry *anEntries)
+{
 	Queue leavesQueue;
 	// don't forget to clear dynamically allocated memory for list nodes and tree nodes
-	preprocess(size, alphabet, frequencies, leavesQueue);
+	preprocess(anEntriesArraysSize, anEntries, leavesQueue);
+	cout << "Alphabet Frequencies..." << endl;
+	cout << "----------------" << endl;
 	cout << leavesQueue;
+	cout << "----------------" << endl;
 	
-	NodeTree *root = NULL;
 	// list nodes memory is cleared here
-	buildHaffmanCodes(leavesQueue, root);
-	printHaffmanCodes(root);
+	NodeTree *root = nullptr;
+	buildHuffmanCodes(leavesQueue, root);
+	printHuffmanCodes(root);
 	
 	// TODO: clear tree nodes memory
+}
+
+// mark - Application
+
+void getFileName(const char *&aFileName);
+void getFileName(const char *&aFileName)
+{
+	aFileName = "Message.txt";
+}
+
+// TODO: to Mikhail Buhaiov - Learn about Hash Table Data Structure form the book I gave you!
+// Implement your out Hash Table and use it here instead of C++ Standard Library 'unordered_map'!
+// http://www.cplusplus.com/reference/unordered_map/unordered_map/
+
+void computeAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, const char *&aFileName);
+void computeAlphabetFrequencies(int &anEntriesArraysSize, Entry *&anEntries, const char *&aFileName)
+{
+	cout << "File To Encode: " << aFileName << endl << endl;
+	
+	fstream fileStream(aFileName, ios::in);
+	if (fileStream.is_open())
+	{
+		cout << "Computing Alphabet Frequencies..." << endl << endl;
+
+		unordered_map<char, int> alphabetOccurenceMap;
+		unordered_map<char, int>::iterator iterator;
+		int count = 0;
+
+		for(char ch = fileStream.get(); !fileStream.eof(); ch = fileStream.get())
+		{
+			count += 1;
+			
+			iterator = alphabetOccurenceMap.find(ch);
+			if (iterator == alphabetOccurenceMap.end())
+				alphabetOccurenceMap[ch] = 1;
+			else
+				iterator -> second += 1;
+		}
+		
+		anEntriesArraysSize = int(alphabetOccurenceMap.size());
+		anEntries = new Entry[anEntriesArraysSize];
+		
+		int i;
+		for (i = 0, iterator = alphabetOccurenceMap.begin();
+			 iterator != alphabetOccurenceMap.end();
+			 ++i, ++iterator)
+		{
+//			cout << iterator -> first << " " << iterator -> second << endl;
+			
+			// iterator -> first - char
+			// iterator -> second - number of occurences of the char
+			anEntries[i].set(iterator -> first, float(iterator -> second) / float(count));
+		}
+		
+		fileStream.close();
+	}
+	else
+	{
+		cout << "Error. File is not found." << endl;
+	}
+}
+
+void generateCodes(const char *&aFileName);
+void generateCodes(const char *&aFileName)
+{
+	int size = -1;
+	Entry *entries = nullptr;
+	computeAlphabetFrequencies(size, entries, aFileName);
+	generateCodes(size, entries);
+	
+	// use entries to encode file
+	delete [] entries;
+}
+
+void encodeFile();
+void encodeFile()
+{
+	const char *fileName = nullptr;
+	getFileName(fileName);
+	generateCodes(fileName);
+}
+
+// mark -
+
+int menu();
+int menu()
+{
+	cout << "Encodings Demonstration Program (Huffman Codes)." << endl;
+	cout << "0 - Exit." << endl;
+	cout << "1 - Encode." << endl;
+	cout << "2 - Decode." << endl;
+	cout << "> ";
+	
+	float integer;
+	cin >> integer;
+	if(cin.fail())
+	{
+		cin.clear();
+		cin.ignore(2000, '\n');
+		integer = -1;
+	}
+	else if (integer < 0 || integer > 4 || (integer - int(integer)) > 0.0001)
+	{
+		integer = -1;
+	}
+	return int(integer);
+}
+
+int run();
+int run()
+{
+	int isInitialRun = true;
+	int option = -1;
+	do
+	{
+		if (isInitialRun)
+			isInitialRun = false;
+		else
+			cout << endl;
+		
+		option = menu();
+		cout << endl;
+		if (option == -1)
+		{
+			cout << "Invalid selection. Please, try again." << endl;
+			continue;
+		}
+		
+		switch (option)
+		{
+			case 0:
+			{
+				cout << "Thank you! Good bye!" << endl;
+				break;
+			}
+			case 1:
+			{
+				encodeFile();
+				break;
+			}
+			case 2:
+			{
+				break;
+			}
+			default:
+				break;
+		}
+	}
+	while(option != 0);
+	return 0;
+}
+
+// mark -
+
+int main() {
+	return run();
 }
